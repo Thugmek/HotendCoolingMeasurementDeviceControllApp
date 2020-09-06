@@ -54,6 +54,8 @@ public class TestProcedure {
         power = startPower;
         couter = 10;
         state = ProcedureState.WAITING1;
+        hw.setHeaterPower(power,maxPower);
+        System.out.println(power);
     }
 
     //Tohle se zavolá pokaždé, když přijdou data z přípravku.
@@ -67,7 +69,7 @@ public class TestProcedure {
             //V druhé fázi je aktivně testováno, zda se teplota chladiče již neustálila
             case HEATING:
                 if(range(10) < 1){
-                    couter = 30;
+                    couter = 10;
                     state = ProcedureState.WAITING2;
                 }
                 break;

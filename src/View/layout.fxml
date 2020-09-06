@@ -46,13 +46,13 @@
                               </Canvas>
                               <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" GridPane.rowIndex="1">
                                  <children>
-                                    <Button fx:id="btnZoomOut" mnemonicParsing="false" text="Zoom out" />
+                                    <Button fx:id="btnZoomOut" disable="true" mnemonicParsing="false" text="Zoom out" />
                                     <TextField fx:id="txfZoom" editable="false" prefWidth="75.0" text="50 sec">
                                        <HBox.margin>
                                           <Insets />
                                        </HBox.margin>
                                     </TextField>
-                                    <Button fx:id="btnZoomIn" mnemonicParsing="false" text="Zoom in" />
+                                    <Button fx:id="btnZoomIn" disable="true" mnemonicParsing="false" text="Zoom in" />
                                  </children>
                               </HBox>
                               <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1">

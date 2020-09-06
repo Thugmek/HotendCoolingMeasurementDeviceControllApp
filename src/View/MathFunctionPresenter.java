@@ -55,7 +55,8 @@ public class MathFunctionPresenter {
 
         double[] data = function.getValues().get(dataCount-1);
         for(int i = 0;i<data.length;i++){
-            displays[i].setText(data[i] + " °C");
+            //displays[i].setText(data[i] + " °C");
+            displays[i].setText(String.format("%.2f °C",data[i]));
         }
 
     }

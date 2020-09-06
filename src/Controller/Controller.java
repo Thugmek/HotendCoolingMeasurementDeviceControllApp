@@ -1,9 +1,6 @@
 package Controller;
 
-import Model.Hardware;
-import Model.MathFunction;
-import Model.Physics;
-import Model.TestProcedure;
+import Model.*;
 import View.MathFunctionPresenter;
 import com.fazecast.jSerialComm.SerialPort;
 import javafx.application.Platform;
@@ -66,25 +63,25 @@ public class Controller {
     @FXML
     Label lblStatus;
 
-    private ObservableList<SerialPort> ports;
+    private ObservableList<DataPort> ports;
 
     @FXML
     void initialize(){
         //načtení dostupných sériových portú
-        ports = FXCollections.observableList(new ArrayList<SerialPort>());
-        Arrays.stream(SerialPort.getCommPorts()).forEach(port -> ports.add(port));
+        ports = FXCollections.observableList(new ArrayList<DataPort>());
+        Arrays.stream(DataPort.getPorts()).forEach(port -> ports.add(port));
 
         //Logika převodu objektů SerialPort na String
-        cmbSerialPort.setConverter(new StringConverter<SerialPort>() {
+        cmbSerialPort.setConverter(new StringConverter<DataPort>() {
             @Override
-            public String toString(SerialPort o) {
+            public String toString(DataPort o) {
                 if(o != null)
-                return o.getDescriptivePortName();
+                    return o.getName();
                 else return "";
             }
 
             @Override
-            public SerialPort fromString(String s) {
+            public DataPort fromString(String s) {
                 return null;
             }
         });
@@ -127,20 +124,24 @@ public class Controller {
         cmbSerialPort.addEventHandler(MouseEvent.MOUSE_CLICKED,
                 e -> {
                     ports.clear();
-                    Arrays.stream(SerialPort.getCommPorts()).forEach(port -> ports.add(port));
+                    Arrays.stream(DataPort.getPorts()).forEach(port -> ports.add(port));
                 }
         );
         //po vybrání sériového portu z comboboxu...
         cmbSerialPort.addEventHandler(ActionEvent.ACTION,
                 e -> {
-                    hardware.setSerial((SerialPort) cmbSerialPort.getSelectionModel().getSelectedItem());
+                    hardware.setSerial((DataPort) cmbSerialPort.getSelectionModel().getSelectedItem());
                     if(cmbSerialPort.getSelectionModel().getSelectedItem() != null) {
                         btnConnect.setDisable(false);
+                        btnZoomIn.setDisable(false);
+                        btnZoomOut.setDisable(false);
                         lblStatus.setText("Připojte se k zařízení");
                     }
                     else {
                         lblStatus.setText("Vyberte sériový port");
                         btnConnect.setDisable(true);
+                        btnZoomIn.setDisable(true);
+                        btnZoomOut.setDisable(true);
                     }
                 }
         );

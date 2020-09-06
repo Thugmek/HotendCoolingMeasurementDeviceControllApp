@@ -4,16 +4,16 @@ import com.fazecast.jSerialComm.*;
  * Rozhraní pro komunikaci s hardwarem
 **/
 public class Hardware {
-    private SerialPort serial;
+    private DataPort serial;
     private MathFunction mathFunction;
 
     public Hardware(){
     }
 
     public void connect(){
-        serial.openPort();
         MessageListener listener = new MessageListener();
         serial.addDataListener(listener);
+        serial.openPort();
     }
 
     public void disconect(){
@@ -22,18 +22,18 @@ public class Hardware {
     }
 
     public void setHeaterPower(int power, int maxPower){
-        double pow = power/maxPower;
+        double pow = (double)power/maxPower;
         pow = pow * 255;
         byte p = (byte)pow;
         byte[] msg = {'s',p};
         serial.writeBytes(msg,2);
     }
 
-    public SerialPort getSerial() {
+    public DataPort getSerial() {
         return serial;
     }
 
-    public void setSerial(SerialPort serial) {
+    public void setSerial(DataPort serial) {
         this.serial = serial;
     }
 
@@ -45,7 +45,7 @@ public class Hardware {
         this.mathFunction = mathFunction;
     }
 
-    private final class MessageListener implements SerialPortMessageListener
+    private final class MessageListener implements SerialPortMessageListener,TestPortMessageListener
     {
         @Override
         public int getListeningEvents() { return SerialPort.LISTENING_EVENT_DATA_RECEIVED; }
@@ -64,6 +64,10 @@ public class Hardware {
             for (byte b:delimitedMessage) {
                 csv += (char)b;
             }
+            mathFunction.addCSV(csv);
+        }
+        @Override
+        public void testDataEvent(String csv) {
             mathFunction.addCSV(csv);
         }
     }
