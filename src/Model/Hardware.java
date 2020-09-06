@@ -1,9 +1,11 @@
 package Model;
 import com.fazecast.jSerialComm.*;
-
+/**
+ * Rozhraní pro komunikaci s hardwarem
+**/
 public class Hardware {
     private SerialPort serial;
-    private MathFunction mf;
+    private MathFunction mathFunction;
 
     public Hardware(){
     }
@@ -35,12 +37,12 @@ public class Hardware {
         this.serial = serial;
     }
 
-    public MathFunction getMf() {
-        return mf;
+    public MathFunction getMathFunction() {
+        return mathFunction;
     }
 
-    public void setMf(MathFunction mf) {
-        this.mf = mf;
+    public void setMathFunction(MathFunction mathFunction) {
+        this.mathFunction = mathFunction;
     }
 
     private final class MessageListener implements SerialPortMessageListener
@@ -62,9 +64,7 @@ public class Hardware {
             for (byte b:delimitedMessage) {
                 csv += (char)b;
             }
-            //synchronized (mf) {
-                mf.addCSV(csv);
-            //}
+            mathFunction.addCSV(csv);
         }
     }
 }

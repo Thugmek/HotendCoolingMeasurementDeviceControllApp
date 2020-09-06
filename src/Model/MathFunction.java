@@ -1,14 +1,7 @@
 package Model;
 
-import View.MathFunctionPresenter;
-
-import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MathFunction {
     private ArrayList<double[]> values;
@@ -19,6 +12,7 @@ public class MathFunction {
         consumers = new ArrayList<>();
     }
 
+    //Přidá do funkce hodnoty z CSV
     public void addCSV(String csv){
         String str[] = csv.split("\\|");
         double[] data = new double[str.length];

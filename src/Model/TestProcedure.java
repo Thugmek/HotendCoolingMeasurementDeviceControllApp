@@ -1,9 +1,19 @@
 package Model;
 
-import com.fazecast.jSerialComm.SerialPort;
-
 import java.util.ArrayList;
 import java.util.function.Consumer;
+
+/***********************************************************************************************************************
+ * Testovací procedura nastaví výkon heateru na určitou hodnotu a počká na ustálení teploty. Poté je spočítáno množství
+ * tepla, které jde skrz heatbreak do chladiče. Jelikož je teplota stabilní, musí platit, že teplo přicházející
+ * heatbreakem se rovná teplu odvedenému do okolí. Spočítáme rozdíl teplot mezi chladičem a okolím a dostaneme vztah
+ * mezi výkonem a oteplením.
+ * V dokonalém světě bychom v tuto chvíli měli hotovo, ale v realných podmínkách bude lepší měření zopakovat pro
+ * několik hodnot výkonu a výsledek zprůměrovat.
+ * Po dokončení testu je zavolán callback, kterým se předá informace o dokončení měření Controlleru a ten poté zařídí
+ * zobrazení.
+ **********************************************************************************************************************/
+
 
 public class TestProcedure {
 
@@ -42,7 +52,7 @@ public class TestProcedure {
     public void start(){
         results = new ArrayList<>();
         power = startPower;
-        couter = 3; //10
+        couter = 10;
         state = ProcedureState.WAITING1;
     }
 
@@ -57,7 +67,7 @@ public class TestProcedure {
             //V druhé fázi je aktivně testováno, zda se teplota chladiče již neustálila
             case HEATING:
                 if(range(10) < 1){
-                    couter = 3; //30
+                    couter = 30;
                     state = ProcedureState.WAITING2;
                 }
                 break;
@@ -68,6 +78,7 @@ public class TestProcedure {
                     results.add(calculateThermalResistance());
                     power += powerStep;
                     if(power <= endPower){
+                        couter = 10;
                         hw.setHeaterPower(power,maxPower);
                         state = ProcedureState.WAITING1;
                     }else {
@@ -103,7 +114,7 @@ public class TestProcedure {
         return res;
     }
 
-    //Vrátí rozpětí posledních hodnot. Slouźí k určení, zda se teplota již ustálila.
+    //Vrátí rozpětí posledních hodnot. Slouží k určení, zda se teplota již ustálila.
     private double range(int n){
         double max = Double.MIN_VALUE;
         double min = Double.MAX_VALUE;

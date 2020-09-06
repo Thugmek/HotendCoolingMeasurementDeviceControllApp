@@ -10,10 +10,10 @@ public class MathFunctionPresenter {
     MathFunction function;
     GraphicsContext graph;
     TextField[] displays;
-    int time = 50;
-    int timeindex = 6;
-    private int[] niceValues = {1,2,5};
-    double maxY = 20;
+    int timeFrame = 50; //Délka vykreslného úseku v sekundách
+    int timeindex = 6;  //Délka vykresleného úseku v krocích
+    private int[] niceValues = {1,2,5}; //Násobky těchot hodnot budou pěkné
+    double maxTemp = 20;
     int width = 400; //tohle by se nemělo být zadané natvrdo, ale...
     int height = 200;
 
@@ -25,33 +25,33 @@ public class MathFunctionPresenter {
     }
 
     public void update(){
-        double maxTemp = 0;
+        double maxT = 0;
 
         int dataCount = function.getValues().size();
-        double tempZoom = height/maxY;
+        double tempZoom = height/ maxTemp;
 
         //clear
         graph.setFill(Paint.valueOf("#AAAAAA"));
         graph.fillRect(0,0,width,height);
 
         int from = dataCount-1;
-        int to = Math.max(dataCount-time,0);
+        int to = Math.max(dataCount- timeFrame,0);
         for(int i = from;i>to;i--){
             double[] data2 = function.getValues().get(i);
             double[] data1 = function.getValues().get(i-1);
             for(int j = 0;j<data1.length;j++){
                 graph.setStroke(paints[j%4]);
                 graph.strokeLine(
-                        map(i,dataCount-time,from,0,width), //x1 - horizontální osa
+                        map(i,dataCount- timeFrame,from,0,width), //x1 - horizontální osa
                         height-data2[j]*tempZoom,//y1 - vertikální osa
-                        map(i-1,dataCount-time,from,0,width), //x2
+                        map(i-1,dataCount- timeFrame,from,0,width), //x2
                         height-data1[j]*tempZoom //y2
                 );
-                maxTemp = Math.max(maxTemp,data2[j]);
+                maxT = Math.max(maxT,data2[j]);
             }
         }
 
-        maxY = maxTemp + 10;
+        maxTemp = maxT + 10;
 
         double[] data = function.getValues().get(dataCount-1);
         for(int i = 0;i<data.length;i++){
@@ -60,6 +60,7 @@ public class MathFunctionPresenter {
 
     }
 
+    //Přemapuje hodnotu z jednoho rozsau do jiného rozsahu
     private double map(double n, double fromMin,double fromMax,double toMin, double toMax){
         return (((n-fromMin)/(fromMax-fromMin))*(toMax-toMin))+toMin;
     }
@@ -73,13 +74,8 @@ public class MathFunctionPresenter {
         function.getConsumers().add(e -> update());
     }
 
-    public int getTime() {
-        return time;
-    }
-
-    public void setTime(int time) {
-        this.time = time<1?1:time;
-        update();
+    public int getTimeFrame() {
+        return timeFrame;
     }
 
     public void zoomIn(){
@@ -91,6 +87,6 @@ public class MathFunctionPresenter {
         updateTime();
     }
     private void updateTime(){
-        time = niceValues[timeindex%3] * (int)Math.pow(10,timeindex/3);
+        timeFrame = niceValues[timeindex%3] * (int)Math.pow(10,timeindex/3);
     }
 }

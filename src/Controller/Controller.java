@@ -66,18 +66,15 @@ public class Controller {
     @FXML
     Label lblStatus;
 
-
     private ObservableList<SerialPort> ports;
-    private Hardware hardware;
 
     @FXML
     void initialize(){
-
+        //načtení dostupných sériových portú
         ports = FXCollections.observableList(new ArrayList<SerialPort>());
         Arrays.stream(SerialPort.getCommPorts()).forEach(port -> ports.add(port));
 
-        hardware = new Hardware();
-
+        //Logika převodu objektů SerialPort na String
         cmbSerialPort.setConverter(new StringConverter<SerialPort>() {
             @Override
             public String toString(SerialPort o) {
@@ -94,22 +91,29 @@ public class Controller {
 
         cmbSerialPort.setItems(ports);
 
+        //canvas do kterého se bude vykreslovat graf teplot
         canTemps.getGraphicsContext2D().setFill(Paint.valueOf("#AAAAAA"));
         canTemps.getGraphicsContext2D().fillRect(0,0,800,200);
-        //canTemps.getGraphicsContext2D().strokeLine(10,0,20,0);
 
+        //pole k zobrazení teplot
         TextField[] tempDisplays = {txfAmbientTemp,txfHeatblockTemp,txfHeatSink1Temp,txfHeatSink2Temp};
+        //zobrazovací logika matematické funkce
         MathFunctionPresenter mfp = new MathFunctionPresenter(canTemps.getGraphicsContext2D(),tempDisplays);
+        //matematická funkce
         MathFunction mf = new MathFunction();
         mfp.setFunction(mf);
-        hardware.setMf(mf);
-        txfZoom.setText(mfp.getTime() + " sec");
+        txfZoom.setText(mfp.getTimeFrame() + " sec");
+
+        //instanciance rozhraní hardwarového přípravku
+        Hardware hardware = new Hardware();
+        hardware.setMathFunction(mf);
 
 
+        //instance testovací procedury
         Alert infobox = new Alert(Alert.AlertType.INFORMATION);
         TestProcedure test = new TestProcedure(mf,hardware, e -> {
             Platform.runLater(() -> {
-                lblStatus.setText("Test dokončen Rth: " + String.format("%.4f",e.getResult()) + "K/W");
+                lblStatus.setText("Test dokončen. Rth: " + String.format("%.4f",e.getResult()) + "K/W");
                 btnStartTest.setDisable(false);
                 infobox.setTitle("Měření dokončeno");
                 infobox.setHeaderText("Měření dokončeno");
@@ -119,19 +123,14 @@ public class Controller {
         });
 
         //Event hadlers--------------------------------------------------------------------------------------
-        txfHeatbreakCrossSection.addEventHandler(KeyEvent.KEY_RELEASED,
-                e -> {
-                    System.out.println(txfHeatbreakCrossSection.getText());
-                }
-        );
-
+        //Aktualizace sériových portů po kliknutí na combobox
         cmbSerialPort.addEventHandler(MouseEvent.MOUSE_CLICKED,
                 e -> {
                     ports.clear();
                     Arrays.stream(SerialPort.getCommPorts()).forEach(port -> ports.add(port));
                 }
         );
-
+        //po vybrání sériového portu z comboboxu...
         cmbSerialPort.addEventHandler(ActionEvent.ACTION,
                 e -> {
                     hardware.setSerial((SerialPort) cmbSerialPort.getSelectionModel().getSelectedItem());
@@ -145,19 +144,20 @@ public class Controller {
                     }
                 }
         );
-
+        //přiblížení/oddálení grafu
         btnZoomIn.setOnAction(e -> {
             //mfp.setTime(mfp.getTime()-1);
             mfp.zoomIn();
-            txfZoom.setText(mfp.getTime() + " sec");
+            txfZoom.setText(mfp.getTimeFrame() + " sec");
             mfp.update();
         });
         btnZoomOut.setOnAction(e -> {
             //mfp.setTime(mfp.getTime()+1);
             mfp.zoomOut();
-            txfZoom.setText(mfp.getTime() + " sec");
+            txfZoom.setText(mfp.getTimeFrame() + " sec");
             mfp.update();
         });
+        //připojení k/odpojení od zařízení
         btnConnect.setOnAction(e -> {
             hardware.connect();
             btnConnect.setDisable(true);
@@ -173,33 +173,76 @@ public class Controller {
             lblStatus.setText("Připojte se k zařízení");
         });
 
+        //reakce na změnu polí v sekci "heatbreak"
         EventHandler<KeyEvent> handler = e ->{
-            lblThermalConductivity.setText(Physics.thermalConductivity(
-                    Double.parseDouble(txfHeatbreakCrossSection.getText()),
-                    Double.parseDouble(txfHeatbreakLength.getText()),
-                    Double.parseDouble(txfHeatbrekThermalConductivity.getText())
-            ) + "");
-        };
+            if(validateNumberInput(((TextField)e.getSource()).getText())){
+                ((TextField)e.getSource()).setStyle("");
 
+                lblThermalConductivity.setText(String.format(
+                        "%.4f",
+                        Physics.thermalConductivity(
+                                Double.parseDouble(txfHeatbreakCrossSection.getText()),
+                                Double.parseDouble(txfHeatbreakLength.getText()),
+                                Double.parseDouble(txfHeatbrekThermalConductivity.getText())
+                        )));
+            }else{
+                ((TextField)e.getSource()).setStyle("-fx-background-color:red;");
+                lblThermalConductivity.setText("NaN");
+            }
+        };
         txfHeatbreakCrossSection.addEventHandler(KeyEvent.KEY_RELEASED,handler);
         txfHeatbreakLength.addEventHandler(KeyEvent.KEY_RELEASED,handler);
         txfHeatbrekThermalConductivity.addEventHandler(KeyEvent.KEY_RELEASED,handler);
 
+        //reakce na změnu ostatních polí"
+        EventHandler<KeyEvent> validate = e ->{
+            if(validateNumberInput(((TextField)e.getSource()).getText()))
+                ((TextField)e.getSource()).setStyle("");
+            else
+                ((TextField)e.getSource()).setStyle("-fx-background-color:red;");
+        };
+        txfMaxPower.addEventHandler(KeyEvent.KEY_RELEASED,validate);
+        txfTestPowerStep.addEventHandler(KeyEvent.KEY_RELEASED,validate);
+        txfTestEndPower.addEventHandler(KeyEvent.KEY_RELEASED,validate);
+        txfTestStartPower.addEventHandler(KeyEvent.KEY_RELEASED,validate);
+
+        //po kliknutí na tlačítko start test
         btnStartTest.setOnAction(e -> {
-            lblStatus.setText("Test běží...");
-            test.setParams(
-                    Integer.parseInt(txfTestStartPower.getText()),
-                    Integer.parseInt(txfTestEndPower.getText()),
-                    Integer.parseInt(txfTestPowerStep.getText()),
-                    Integer.parseInt(txfMaxPower.getText()),
-                    Double.parseDouble(lblThermalConductivity.getText())
-            );
-            test.start();
+            boolean dataOk = true;
+            dataOk = dataOk && validateNumberInput(txfTestStartPower.getText());
+            dataOk = dataOk && validateNumberInput(txfTestEndPower.getText());
+            dataOk = dataOk && validateNumberInput(txfTestPowerStep.getText());
+            dataOk = dataOk && validateNumberInput(txfMaxPower.getText());
+            dataOk = dataOk && validateNumberInput(txfHeatbreakCrossSection.getText());
+            dataOk = dataOk && validateNumberInput(txfHeatbreakLength.getText());
+            dataOk = dataOk && validateNumberInput(txfHeatbrekThermalConductivity.getText());
+            if(dataOk) {
+                lblStatus.setText("Test běží...");
+                test.setParams(
+                        Integer.parseInt(txfTestStartPower.getText()),
+                        Integer.parseInt(txfTestEndPower.getText()),
+                        Integer.parseInt(txfTestPowerStep.getText()),
+                        Integer.parseInt(txfMaxPower.getText()),
+                        Physics.thermalConductivity(
+                                Double.parseDouble(txfHeatbreakCrossSection.getText()),
+                                Double.parseDouble(txfHeatbreakLength.getText()),
+                                Double.parseDouble(txfHeatbrekThermalConductivity.getText())
+                        )
+                );
+                test.start();
+            }else{
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Chyba");
+                alert.setHeaderText("Neplatný vstup");
+                alert.setContentText("Zadejte platné vstupní hodnoty");
+                alert.show();
+
+            }
         });
 
     }
 
-    public void close(){
-
+    private boolean validateNumberInput(String s){
+        return s.matches("^\\d*\\.{0,1}\\d*$");
     }
 }
